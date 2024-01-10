@@ -1,12 +1,9 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { useEffect, useState } from "react";
-import { Textarea, Button, Card } from "@nextui-org/react";
+import { Textarea, Button, Card, CardBody } from "@nextui-org/react";
 import { SSE } from "sse";
-import { createId } from "@paralleldrive/cuid2";
-import _ from "lodash";
 
 interface Message {
-  id: string;
   userName: string;
   text: string;
 }
@@ -14,59 +11,28 @@ interface Message {
 function App() {
   const [prompt, setPrompt] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-  const [result, setResult] = useState<Partial<Message>>({});
-  const [messages, setMessages] = useState<Partial<Message>[]>([]);
+  const [result, setResult] = useState<string>("");
+  const [messages, setMessages] = useState<Message[]>([]);
 
   useEffect(() => {
-    if (result.id != null && result.id != undefined) {
-      console.log("result.............", result);
-
-      // const mergeResult = _.merge(messages, result);
-      let mergeResult: any;
-      const messageIds = messages.map((e) => e.id);
-      if (messageIds.includes(result.id)) {
-        console.log("có id");
-
-        const messagesArr = messages.map((e) => {
-          if ((e.id = result.id)) {
-            return result;
-          }
-          return e;
-        });
-        mergeResult = messagesArr;
-      } else {
-        console.log("chưa có id");
-        console.log(messages, "-----------------messages");
-        mergeResult = [...messages, result];
-      }
-      console.log("mergeResult.............", mergeResult);
-      // console.log("mergeResult.............", mergeResult);
-      // setMessages(mergeResult);
+    if (result != "" && result != undefined) {
+      setMessages([...messages, { userName: "chatgpt", text: result }]);
       setPrompt("");
     }
   }, [result]);
 
   const handleSubmitPromptBtnClicked = async () => {
-    const humanId = createId();
-    const botId = createId();
+    const message: Message = {
+      userName: "human",
+      text: prompt,
+    };
 
-    setMessages([
-      ...messages,
-      {
-        id: humanId,
-        userName: "human",
-        text: prompt,
-      },
-    ]);
+    messages.push(message);
+    setMessages(messages);
 
     if (prompt !== "") {
       setIsLoading(true);
-
-      // setResult({
-      //   id: newConversionId,
-      //   userName: "chatgpt",
-      //   text: "...",
-      // });
+      setResult("");
 
       const source = new SSE("http://192.168.1.13:8080/chatbot/conversion", {
         headers: {
@@ -76,19 +42,15 @@ function App() {
         payload: JSON.stringify({ prompt: prompt }),
       });
 
-      let text = "...";
+      let text = "";
       source.addEventListener("chat", (e: any) => {
         console.log("eeeeeeeeeeeeeee.................", e.data);
         if (e.data != "[DONE]") {
           // const payload = JSON.parse(e.data);
           text += ` ${e.data}`;
-          setResult({
-            id: botId,
-            userName: "chatgpt",
-            text: text,
-          });
         } else {
           console.log("done.......................", text);
+          setResult(text);
           source.close();
         }
       });
@@ -105,6 +67,8 @@ function App() {
     }
   };
 
+  console.log(messages, "----------------------messages");
+
   return (
     <>
       <div className="w-3/5 m-auto">
@@ -112,27 +76,31 @@ function App() {
         <Card
           isFooterBlurred
           radius="lg"
-          className="border-none w-full h-[50vh] py-2 px-4 overflow-auto mb-8"
+          className="border-none w-full h-[70vh] overflow-auto mb-8"
         >
-          {messages?.length > 0 &&
-            messages.map((mess, index) => {
-              const isHuman = mess?.userName === "human";
-              return (
-                <span
-                  key={index}
-                  className={mess?.userName === "human" ? "text-end" : ""}
-                >
-                  <span
-                    className={`border border-solid rounded-xl p-2 ${
-                      isHuman ? "bg-blue-500 text-white" : "bg-gray-100"
-                    }`}
-                  >
-                    {`${mess.id}  ${mess.text}`}
-                  </span>
-                  <br />
-                </span>
-              );
-            })}
+          <CardBody>
+            <div className="w-full">
+              {messages?.length > 0 &&
+                messages.map((mess, index) => {
+                  const isHuman = mess?.userName === "human";
+                  return (
+                    <div key={index} className="flex items-center mb-2">
+                      {!isHuman ? (
+                        <p className="mx-2 bg-[#f6f6f6] p-2 rounded-xl">
+                          {mess.text}
+                        </p>
+                      ) : (
+                        <div className="float-right mr-0 ml-auto">
+                          <p className="mx-2 p-2 rounded-xl bg-[#e3effd]">
+                            {mess.text}
+                          </p>
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+            </div>
+          </CardBody>
         </Card>
         <div>
           <Textarea

@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { useEffect, useState, useRef } from "react";
-import { Textarea, Button } from "@nextui-org/react";
+import { Textarea, Button, Card } from "@nextui-org/react";
 import { SSE } from "sse";
 
 function App() {
@@ -29,17 +29,17 @@ function App() {
 
       source.addEventListener("chat", (e: any) => {
         if (e.data != "[DONE]") {
-          console.log('eeeeeeeeeeeeeee.................', e.data)
+          console.log("eeeeeeeeeeeeeee.................", e.data);
           // const payload = JSON.parse(e.data);
           const text = e.data;
           if (text != "\n") {
             // console.log("Text: " + text);
-            resultRef.current = prompt + '\n' + resultRef.current + " " + text;
+            resultRef.current = prompt + "\n" + resultRef.current + " " + text;
             // console.log("ResultRef.current: " + resultRef.current);
             setResult(resultRef.current as unknown as string);
           }
         } else {
-          console.log('done.......................')
+          console.log("done.......................");
           source.close();
         }
       });
@@ -58,14 +58,57 @@ function App() {
 
   return (
     <>
-      <div>
-        <Textarea value={prompt} onValueChange={setPrompt} placeholder="Insert your prompt here" />
-        <Button
-          isLoading={isLoading}
-          onClick={() => handleSubmitPromptBtnClicked()}
+      <div className="w-3/5 m-auto">
+        <div className="text-3xl font-semibold text-center my-4">Chat GPT</div>
+        <Card
+          isFooterBlurred
+          radius="lg"
+          className="border-none w-full h-[50vh] py-2 px-4 overflow-auto mb-8"
         >
-          Prompt
-        </Button>
+          So I started to walk into the water. I won't lie to you boys, I was
+          terrified. But I pressed on, and as I made my way past the breakers a
+          strange calm came over me. I don't know if it was divine intervention
+          or the kinship of all living things but I tell you Jerry at that
+          moment, I was a marine biologist. So I started to walk into the water.
+          I won't lie to you boys, I was terrified. But I pressed on, and as I
+          made my way past the breakers a strange calm came over me. I don't
+          know if it was divine intervention or the kinship of all living things
+          but I tell you Jerry at that moment, I was a marine biologist. So I
+          started to walk into the water. I won't lie to you boys, I was or the
+          kinship of all living things but I tell you Jerry at that moment, I
+          was a marine biologist.
+        </Card>
+        {/* <div className="w-1/2 h-[30vh] border border-solid rounded-lg py-2 px-4">
+          So I started to walk into the water. I won't lie to you boys, I was
+          terrified. But I pressed on, and as I made my way past the breakers a
+          strange calm came over me. I don't know if it was divine intervention
+          or the kinship of all living things but I tell you Jerry at that
+          moment, I was a marine biologist.
+        </div> */}
+        <div>
+          <Textarea
+            className="mb-2"
+            value={prompt}
+            onValueChange={setPrompt}
+            placeholder="Insert your prompt here"
+          />
+          <div className="text-end">
+            <Button
+              isLoading={isLoading}
+              className="mr-2"
+              // onClick={() => handleSubmitPromptBtnClicked()}
+            >
+              Clear
+            </Button>
+            <Button
+              isLoading={isLoading}
+              onClick={() => handleSubmitPromptBtnClicked()}
+              color="primary"
+            >
+              Prompt
+            </Button>
+          </div>
+        </div>
       </div>
     </>
   );

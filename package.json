@@ -11,9 +11,12 @@
   },
   "dependencies": {
     "@nextui-org/react": "^2.2.9",
+    "@paralleldrive/cuid2": "^2.2.2",
     "@react-nano/use-event-source": "^0.13.0",
+    "@types/lodash": "^4.14.202",
     "@types/sse": "^0.0.0",
     "framer-motion": "^10.17.12",
+    "lodash": "^4.17.21",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "sse": "github:mpetazzoni/sse.js"

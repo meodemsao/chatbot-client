@@ -2,8 +2,11 @@
 import { useEffect, useState } from "react";
 import { Textarea, Button, Card } from "@nextui-org/react";
 import { SSE } from "sse";
+import { createId } from "@paralleldrive/cuid2";
+import _ from "lodash";
 
 interface Message {
+  id: string;
   userName: string;
   text: string;
 }
@@ -11,30 +14,61 @@ interface Message {
 function App() {
   const [prompt, setPrompt] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-  const [result, setResult] = useState<string>("");
-  const [messages, setMessages] = useState<Message[]>([]);
+  const [result, setResult] = useState<Partial<Message>>({});
+  const [messages, setMessages] = useState<Partial<Message>[]>([]);
 
   useEffect(() => {
-    if (result != "" && result != undefined) {
-      setMessages([...messages, { userName: "chatgpt", text: result }]);
+    if (result.id != null && result.id != undefined) {
+      console.log("result.............", result);
+
+      // const mergeResult = _.merge(messages, result);
+      let mergeResult: any;
+      const messageIds = messages.map((e) => e.id);
+      if (messageIds.includes(result.id)) {
+        console.log("có id");
+
+        const messagesArr = messages.map((e) => {
+          if ((e.id = result.id)) {
+            return result;
+          }
+          return e;
+        });
+        mergeResult = messagesArr;
+      } else {
+        console.log("chưa có id");
+        console.log(messages, "-----------------messages");
+        mergeResult = [...messages, result];
+      }
+      console.log("mergeResult.............", mergeResult);
+      // console.log("mergeResult.............", mergeResult);
+      // setMessages(mergeResult);
       setPrompt("");
     }
   }, [result]);
 
   const handleSubmitPromptBtnClicked = async () => {
-    const message: Message = {
-      userName: "human",
-      text: prompt,
-    };
+    const humanId = createId();
+    const botId = createId();
 
-    messages.push(message);
-    setMessages(messages);
+    setMessages([
+      ...messages,
+      {
+        id: humanId,
+        userName: "human",
+        text: prompt,
+      },
+    ]);
 
     if (prompt !== "") {
       setIsLoading(true);
-      setResult("");
 
-      const source = new SSE("http://localhost:8080/chatbot/conversion", {
+      // setResult({
+      //   id: newConversionId,
+      //   userName: "chatgpt",
+      //   text: "...",
+      // });
+
+      const source = new SSE("http://192.168.1.13:8080/chatbot/conversion", {
         headers: {
           "Content-Type": "application/json",
         },
@@ -42,15 +76,19 @@ function App() {
         payload: JSON.stringify({ prompt: prompt }),
       });
 
-      let text = "";
+      let text = "...";
       source.addEventListener("chat", (e: any) => {
         console.log("eeeeeeeeeeeeeee.................", e.data);
         if (e.data != "[DONE]") {
           // const payload = JSON.parse(e.data);
           text += ` ${e.data}`;
+          setResult({
+            id: botId,
+            userName: "chatgpt",
+            text: text,
+          });
         } else {
           console.log("done.......................", text);
-          setResult(text);
           source.close();
         }
       });
@@ -78,11 +116,21 @@ function App() {
         >
           {messages?.length > 0 &&
             messages.map((mess, index) => {
+              const isHuman = mess?.userName === "human";
               return (
-                <div key={index}>
-                  <p>{`${mess.userName}: ${mess.text}`}</p>
+                <span
+                  key={index}
+                  className={mess?.userName === "human" ? "text-end" : ""}
+                >
+                  <span
+                    className={`border border-solid rounded-xl p-2 ${
+                      isHuman ? "bg-blue-500 text-white" : "bg-gray-100"
+                    }`}
+                  >
+                    {`${mess.id}  ${mess.text}`}
+                  </span>
                   <br />
-                </div>
+                </span>
               );
             })}
         </Card>
@@ -98,16 +146,11 @@ function App() {
               className="mr-2"
               isLoading={isLoading}
               onClick={() => handleSubmitPromptBtnClicked()}
+              color="primary"
             >
               Prompt
             </Button>
-            <Button
-              isLoading={isLoading}
-              onClick={() => setPrompt("")}
-              color="primary"
-            >
-              Clear
-            </Button>
+            <Button onClick={() => setPrompt("")}>Clear</Button>
           </div>
         </div>
       </div>

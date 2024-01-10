@@ -59,7 +59,7 @@ function App() {
   return (
     <>
       <div className="w-3/5 m-auto">
-        <div className="text-3xl font-semibold text-center my-4">Chat GPT</div>
+        <div className="text-4xl font-semibold text-center my-4">Chat GPT</div>
         <Card
           isFooterBlurred
           radius="lg"

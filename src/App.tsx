@@ -1,20 +1,35 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState } from "react";
 import { Textarea, Button, Card } from "@nextui-org/react";
 import { SSE } from "sse";
+
+interface Message {
+  userName: string;
+  text: string;
+}
 
 function App() {
   const [prompt, setPrompt] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [result, setResult] = useState<string>("");
-
-  const resultRef = useRef();
+  const [messages, setMessages] = useState<Message[]>([]);
 
   useEffect(() => {
-    resultRef.current = result;
+    if (result != "" && result != undefined) {
+      setMessages([...messages, { userName: "chatgpt", text: result }]);
+      setPrompt("");
+    }
   }, [result]);
 
   const handleSubmitPromptBtnClicked = async () => {
+    const message: Message = {
+      userName: "human",
+      text: prompt,
+    };
+
+    messages.push(message);
+    setMessages(messages);
+
     if (prompt !== "") {
       setIsLoading(true);
       setResult("");
@@ -24,22 +39,18 @@ function App() {
           "Content-Type": "application/json",
         },
         method: "POST",
-        payload: JSON.stringify({ message: prompt }),
+        payload: JSON.stringify({ prompt: prompt }),
       });
 
+      let text = "";
       source.addEventListener("chat", (e: any) => {
+        console.log("eeeeeeeeeeeeeee.................", e.data);
         if (e.data != "[DONE]") {
-          console.log("eeeeeeeeeeeeeee.................", e.data);
           // const payload = JSON.parse(e.data);
-          const text = e.data;
-          if (text != "\n") {
-            // console.log("Text: " + text);
-            resultRef.current = prompt + "\n" + resultRef.current + " " + text;
-            // console.log("ResultRef.current: " + resultRef.current);
-            setResult(resultRef.current as unknown as string);
-          }
+          text += ` ${e.data}`;
         } else {
-          console.log("done.......................");
+          console.log("done.......................", text);
+          setResult(text);
           source.close();
         }
       });
@@ -65,18 +76,15 @@ function App() {
           radius="lg"
           className="border-none w-full h-[50vh] py-2 px-4 overflow-auto mb-8"
         >
-          So I started to walk into the water. I won't lie to you boys, I was
-          terrified. But I pressed on, and as I made my way past the breakers a
-          strange calm came over me. I don't know if it was divine intervention
-          or the kinship of all living things but I tell you Jerry at that
-          moment, I was a marine biologist. So I started to walk into the water.
-          I won't lie to you boys, I was terrified. But I pressed on, and as I
-          made my way past the breakers a strange calm came over me. I don't
-          know if it was divine intervention or the kinship of all living things
-          but I tell you Jerry at that moment, I was a marine biologist. So I
-          started to walk into the water. I won't lie to you boys, I was or the
-          kinship of all living things but I tell you Jerry at that moment, I
-          was a marine biologist.
+          {messages?.length > 0 &&
+            messages.map((mess, index) => {
+              return (
+                <div key={index}>
+                  <p>{`${mess.userName}: ${mess.text}`}</p>
+                  <br />
+                </div>
+              );
+            })}
         </Card>
         {/* <div className="w-1/2 h-[30vh] border border-solid rounded-lg py-2 px-4">
           So I started to walk into the water. I won't lie to you boys, I was
@@ -94,18 +102,18 @@ function App() {
           />
           <div className="text-end">
             <Button
-              isLoading={isLoading}
               className="mr-2"
-              // onClick={() => handleSubmitPromptBtnClicked()}
+              isLoading={isLoading}
+              onClick={() => handleSubmitPromptBtnClicked()}
             >
-              Clear
+              Prompt
             </Button>
             <Button
               isLoading={isLoading}
-              onClick={() => handleSubmitPromptBtnClicked()}
+              onClick={() => setPrompt("")}
               color="primary"
             >
-              Prompt
+              Clear
             </Button>
           </div>
         </div>
